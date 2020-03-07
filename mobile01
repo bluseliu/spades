@@ -1,53 +1,56 @@
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 import requests
 from urllib import request
 from bs4 import BeautifulSoup
 
-
 headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
-for page in range(1, 2):
-    print('page:', page)
-    url = 'https://www.mobile01.com/topiclist.php?f=188&p={0}'.format(page)
+""" 分區代碼表: 基隆市188  台北市189  新北市190  桃園市191  新竹市192  新竹縣193  宜蘭縣209 """
 
+# 列表
+num = input('請輸入分區代碼: ')
+area = {188:'基隆市', 189:'台北市', 190:'新北市', 191:'桃園市', 192:'新竹市', 193:'新竹縣', 209:'宜蘭縣'}
+# print('Link is: www.123.com/'+ area.get(num))
+print('開始爬取:', area.get(int(num)))
+
+url_p1 = 'https://www.mobile01.com/topiclist.php?f=' + num
+# url_p1 = 'https://www.mobile01.com/topiclist.php?f=188'
+req = request.Request(url=url_p1, headers=headers)
+res = request.urlopen(req)
+# print(res.read().decode('utf-8'))
+content_p1 = BeautifulSoup(res, 'html.parser')
+title_txt = content_p1.select('div[class="c-listTableTd__title"] a[class="c-link u-ellipsis"]')
+
+# 總頁數
+total_pages = int(content_p1.select('div[class="l-navigation__item l-navigation__item--min"], a[class="c-pagination"]')[-1].text)
+
+page = 1
+while page < total_pages:
+    url = 'https://www.mobile01.com/topiclist.php?f={0}&p={0}'.format(num, page)
     req = request.Request(url=url, headers=headers)
     res = request.urlopen(req)
-    # print(res.read().decode('utf-8'))
     content = BeautifulSoup(res, 'html.parser')
-    title = content.select('div[class="c-listTableTd__title"] a')
-    # print(title[0:])
+    title_txt = content.select('div[class="c-listTableTd__title"] a[class="c-link u-ellipsis"]')
+    print('page', page, ':', url, '\n')
 
-# 抓標題
-    for title_all in title:
-        print('標題:', title_all.text)
-        url_txts = content.select('div[class="c-listTableTd__title"] a[class="c-link u-ellipsis"]')
-        # print(url_txts)
+# 標題
+    for n in range(0,30):
+        print('標題:', title_txt[n].text)
 
-# 抓網址
-        for url_txt in url_txts:
-            url_back = url_txt['href'][12:]
-            url_all = 'https://www.mobile01.com/topicdetail.' + url_back
-            print('網址: https://www.mobile01.com/topicdetail.' + url_back)
+# 網址
+        url_back = title_txt[n]['href'][12:]
+        url_all = 'https://www.mobile01.com/topicdetail.' + url_back
+        print('網址:', url_all)
 
-# 抓內文
-            req = request.Request(url=url_all, headers=headers)
-            res_con = request.urlopen(req)
-            soup_con = BeautifulSoup(res_con, 'html.parser')
-            # print('soup_con:', soup_con)
-            article = soup_con.select('div[itemprop="articleBody"]')
-            for u in article:
-                content = u.text
-                print('內文:', content)
+# 內文
+        req_con = request.Request(url=url_all, headers=headers)
+        res_con = request.urlopen(req_con)
+        soup_con = BeautifulSoup(res_con, 'html.parser')
+        # print('soup_con:', soup_con)
+        article = soup_con.select('div[itemprop="articleBody"]')
+        for articles in article:
+            content = articles.text.strip()
+            print('內文:', content, '\n')
 
-
-'''
-for px in range(1, 4):
-    Query_Parameters_str = 'f: 188, p: ', px
-    print(Query_Parameters_str)
-# px = int(Query_Parameters_str[10] + Query_Parameters_str[11])
-# print(Query_Parameters_str)
-
-    # print("""f: 188
-    # p: """ ,px)
-
-# <link rel='canonical" href="https://www.mobile01.com/topiclist.php?f=188&p=26">
-'''
+    page += 1
