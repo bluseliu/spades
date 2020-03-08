@@ -9,10 +9,11 @@ headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
 """ 分區代碼表: 基隆市188  台北市189  新北市190  桃園市191  新竹市192  新竹縣193  宜蘭縣209 """
 
 # 列表
-num = input('請輸入分區代碼: ')
 area = {188:'基隆市', 189:'台北市', 190:'新北市', 191:'桃園市', 192:'新竹市', 193:'新竹縣', 209:'宜蘭縣'}
+print(area.items())
+num = input('請輸入縣市代碼: ')
 # print('Link is: www.123.com/'+ area.get(num))
-print('開始爬取:', area.get(int(num)))
+print('開始爬取:', area.get(int(num)), '\n')
 
 url_p1 = 'https://www.mobile01.com/topiclist.php?f=' + num
 # url_p1 = 'https://www.mobile01.com/topiclist.php?f=188'
@@ -27,7 +28,9 @@ total_pages = int(content_p1.select('div[class="l-navigation__item l-navigation_
 
 page = 1
 while page < total_pages:
-    url = 'https://www.mobile01.com/topiclist.php?f={0}&p={0}'.format(num, page)
+    url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p={0}'.format(page)
+    # https://www.mobile01.com/topiclist.php?f=188&p=2
+    # url = 'https://www.mobile01.com/topiclist.php?f={0}&p={0}'.format(num, page)
     req = request.Request(url=url, headers=headers)
     res = request.urlopen(req)
     content = BeautifulSoup(res, 'html.parser')
