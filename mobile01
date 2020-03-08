@@ -3,6 +3,8 @@ ssl._create_default_https_context = ssl._create_unverified_context
 import requests
 from urllib import request
 from bs4 import BeautifulSoup
+import os
+import time
 
 headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
@@ -12,11 +14,23 @@ headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
 area = {188:'基隆市', 189:'台北市', 190:'新北市', 191:'桃園市', 192:'新竹市', 193:'新竹縣', 209:'宜蘭縣'}
 print(area.items())
 num = input('請輸入縣市代碼: ')
-# print('Link is: www.123.com/'+ area.get(num))
+
+
+# 建立資料夾
+# path_dir = 'E:\專題\Mobile01'
+path_dir = area.get(int(num))
+if not os.path.exists(path_dir):
+    os.mkdir(path_dir)
+    print('建立新資料夾:', path_dir, '\n')
+else:
+    print('資料夾 ' + path_dir + ' 已存在', '\n')
+
+
 print('開始爬取:', area.get(int(num)), '\n')
 
-url_p1 = 'https://www.mobile01.com/topiclist.php?f=' + num
-# url_p1 = 'https://www.mobile01.com/topiclist.php?f=188'
+
+# url_p1 = 'https://www.mobile01.com/topiclist.php?f=' + num
+url_p1 = 'https://www.mobile01.com/topiclist.php?f=188'
 req = request.Request(url=url_p1, headers=headers)
 res = request.urlopen(req)
 # print(res.read().decode('utf-8'))
@@ -24,13 +38,13 @@ content_p1 = BeautifulSoup(res, 'html.parser')
 title_txt = content_p1.select('div[class="c-listTableTd__title"] a[class="c-link u-ellipsis"]')
 
 # 總頁數
-total_pages = int(content_p1.select('div[class="l-navigation__item l-navigation__item--min"], a[class="c-pagination"]')[-1].text)
+# total_pages = int(content_p1.select('div[class="l-navigation__item l-navigation__item--min"], a[class="c-pagination"]')[-1].text)
+total_pages = 2
 
 page = 1
 while page < total_pages:
-    url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p={0}'.format(page)
-    # https://www.mobile01.com/topiclist.php?f=188&p=2
-    # url = 'https://www.mobile01.com/topiclist.php?f={0}&p={0}'.format(num, page)
+    url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p=1'
+    # url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p={0}'.format(page)
     req = request.Request(url=url, headers=headers)
     res = request.urlopen(req)
     content = BeautifulSoup(res, 'html.parser')
@@ -56,4 +70,10 @@ while page < total_pages:
             content = articles.text.strip()
             print('內文:', content, '\n')
 
+            # f = open(path_dir + '\Article_' + area.keys(num) + '.txt', mode='a', encoding='utf8')
+            f = open(path_dir + '.txt', mode='a', encoding='utf8')
+            f.write(content)
+
     page += 1
+
+print(area.get(int(num)) + ' 存檔完成!!! at', time.asctime())
