@@ -1,3 +1,20 @@
+"""
+待處理：
+1.大船入港error...OK
+2.特殊符號...OK
+3.換行
+4.確認欄位
+{
+"文章網址": "",
+"標題": "",
+"景點名稱": "",
+"文章內容": "",
+"留言": ["" ,"",.....],
+"地址": "",
+"縣市": "",
+}
+
+"""
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 import requests
@@ -7,25 +24,25 @@ import os
 import time
 
 headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
+
+
 # 列表
 area = {188:'基隆市', 189:'台北市', 190:'新北市', 191:'桃園市', 192:'新竹市', 193:'新竹縣', 209:'宜蘭縣'}
 print(area.items())
 num = input('請輸入縣市代碼: ')
 
-# 建立資料夾
-path_dir = 'E:\專題\Mobile01'
-# path_dir = 'E:\專題\\Mobile01\\' + area.get(int(num))
+# 建立縣市資料夾
+# path_dir = 'E:\專題\Mobile01\基隆市'
+path_dir = 'E:\專題\\Mobile01\\' + area.get(int(num))
 
 if not os.path.exists(path_dir):
     os.mkdir(path_dir)
     print('建立新資料夾:', path_dir, '\n')
 else:
-    print('資料夾 ' + path_dir + ' 已存在', '\n')
+    print('資料夾 ' + path_dir + ' 已存在')
 
-
+# 爬取列表
 print('開始爬取:', area.get(int(num)), '\n')
-# input('按Enter後開始爬取')
-
 
 url_p1 = 'https://www.mobile01.com/topiclist.php?f=' + num
 # url_p1 = 'https://www.mobile01.com/topiclist.php?f=188'
@@ -33,51 +50,122 @@ req = request.Request(url=url_p1, headers=headers)
 res = request.urlopen(req)
 # print(res.read().decode('utf-8'))
 content_p1 = BeautifulSoup(res, 'html.parser')
+# print(content_p1)
 title_txt = content_p1.select('div[class="c-listTableTd__title"] a[class="c-link u-ellipsis"]')
 
+# 特殊符號
+'''
+list = ['*', '|', '\\', ':', '\"', '<', '>', ']', '[', '? ', '/', '《', '》', '・', '/', '，', '「', '」', '！', '｜', '【',
+        '】', '？', '、', '.', '’', '–', '～', '?', ' ','|']
+for c in list:
+    string = path_dir_each.replace(c, '0')
+'''
 # 總頁數
 total_pages = int(content_p1.select('div[class="l-navigation__item l-navigation__item--min"], a[class="c-pagination"]')[-1].text) +1
-print(total_pages)
 # total_pages = 2
 
+# 列表頁
 page = 1
 while page < total_pages:
     # url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p=1'
     url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p={0}'.format(page)
     req = request.Request(url=url, headers=headers)
     res = request.urlopen(req)
-    content = BeautifulSoup(res, 'html.parser')
-    title_txt = content.select('div[class="c-listTableTd__title"] a[class="c-link u-ellipsis"]')
+    content_all = BeautifulSoup(res, 'html.parser')
+    title_txt = content_all.select('div[class="c-listTableTd__title"] a[class="c-link u-ellipsis"]')
     print('page', page, ':', url, '\n')
 
-# 標題
+# 標題及建立文章資料夾
     for n in range(0,30):
-        try:
-            print('標題:', title_txt[n].text)
+#        try:
+            title_0 = title_txt[n].text
+            title_1 = title_0.replace('.', '')
+            title_2 = title_1.replace('|', '')
+            title_3 = title_2.replace('?', '')
+            title_save = title_3.replace('/', '')
+            title = ('{"標題" : "' + title_save + '"}')
+
+            path_dir_each_0 = path_dir + '\\' + title_save
+            path_dir_each_1 = path_dir_each_0.replace('.', '')
+            path_dir_each = path_dir_each_1.replace('|', '')
+            # print(path_dir)
+            if not os.path.exists(path_dir_each):
+                os.mkdir(path_dir_each)
+            os.chdir(path_dir_each)
+
+            f = open(title_save + '.txt', mode='a', encoding='utf8')
+            f.write(title_save)
+            #print(title_1)
+            print(title_save, '已寫入')
 
 # 網址
             url_back = title_txt[n]['href'][12:]
-            url_all = 'https://www.mobile01.com/topicdetail.' + url_back
-            print('網址:', url_all)
+            url_article = 'https://www.mobile01.com/topicdetail.' + url_back
+            url_article_1 = ('{"網址" : "' + url_article + '"}')
+            if not os.path.exists(path_dir_each):
+                os.mkdir(path_dir_each)
+            os.chdir(path_dir_each)
+
+            # print('getcwd', os.getcwd())
+            f = open(title_save + '.txt', mode='a', encoding='utf8')
+            f.write(url_article_1)
+            # print(url_article_1)
+            print(url_article_1, '已寫入')
 
 # 內文
-            req_con = request.Request(url=url_all, headers=headers)
+            url_back = title_txt[n]['href'][12:]
+            url_article = 'https://www.mobile01.com/topicdetail.' + url_back
+
+            req_con = request.Request(url=url_article, headers=headers)
             res_con = request.urlopen(req_con)
             soup_con = BeautifulSoup(res_con, 'html.parser')
             # print('soup_con:', soup_con)
-            article = soup_con.select('div[itemprop="articleBody"]')
-            for articles in article:
-                content = articles.text.strip()
-                print('內文:', content, '\n')
+            article = soup_con.select('div[itemprop="articleBody"] ')[0].text.strip()
+            article_1 = ('{"內文" : "' + article + '"}')
+            #print(article_1)
+            if not os.path.exists(path_dir_each):
+                os.mkdir(path_dir_each)
+            os.chdir(path_dir_each)
 
-                os.chdir('E:\專題\Mobile01')
-                f = open('E:\專題\\Mobile01\\' + area.get(int(num)) + '.txt', mode='a', encoding='utf8')
-                f.write(content)
+                # print('getcwd', os.getcwd())
+            f = open(title_save + '.txt', mode='a', encoding='utf8')
+            f.write(article_1)
+            f.write('-----')
+            # print(article_1)
+            print(article_1, '已寫入')
 
-        except:
-            title = "NO_data"
-            print(title)
+#        except:
+#            title = "NO_data"
+#            print(title)
 
+# 圖片
+            url_back = title_txt[n]['href'][12:]
+            url_article = 'https://www.mobile01.com/topicdetail.' + url_back
+
+            req_con = request.Request(url=url_article, headers=headers)
+            res_con = request.urlopen(req_con)
+            soup_con = BeautifulSoup(res_con, 'html.parser')
+            pic_txt_0 = soup_con.select('div[itemprop="articleBody"] img[class="lazy"]')[0:]
+            # print('pic_txt_0:', pic_txt_0)
+
+            if not os.path.exists(path_dir_each):
+                os.mkdir(path_dir_each)
+            os.chdir(path_dir_each)
+
+            for pic in pic_txt_0:
+                pic_url_head = pic['data-src'][0:5]
+                if pic_url_head == 'https':
+                    pic_url = pic['data-src']
+                    # print(pic_url)
+                else:
+                    pic_url = 'http:' + str(pic['data-src'][0:])
+                    # print((pic_url))
+
+                request.urlretrieve(pic_url, 'pic_' + url_article[-7:] + '_' + str(pic_txt_0.index(pic)) + '.jpg')
+                print('圖片檔名:', 'pic_' + url_article[-7:] + '_' + str(pic_txt_0.index(pic)) + '.jpg',
+                      '  圖片網址:', pic_url, '已寫入')
+
+            print()
     page += 1
 
 print(area.get(int(num)) + ' 存檔完成!!! at', time.asctime())
