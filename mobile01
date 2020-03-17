@@ -5,9 +5,9 @@ from urllib import request
 from bs4 import BeautifulSoup
 import os
 import time
+import random
 
-headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                          '(KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
+headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
 # 列表
 area = {188:'基隆市', 189:'台北市', 190:'新北市', 191:'桃園市', 192:'新竹市', 193:'新竹縣', 209:'宜蘭縣'}
@@ -44,6 +44,7 @@ total_pages = int(content_p1.select('div[class="l-navigation__item l-navigation_
 page = 1
 while page < total_pages:
     # url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p=1'
+    # url = 'https://www.mobile01.com/topiclist.php?f=188&p=26'
     url = 'https://www.mobile01.com/topiclist.php?f=' + num + '&p={0}'.format(page)
     req = request.Request(url=url, headers=headers)
     res = request.urlopen(req)
@@ -55,15 +56,15 @@ while page < total_pages:
     for n in range(0,30):
             try:
                 title_replace = title_txt[n].text
-                title_save = title_replace.replace('*','').replace('|','').replace('\\','').replace(':','')\
+                title_save = title_replace[0:20].replace('*','').replace('|','').replace('\\','').replace(':','')\
                 .replace('\"','').replace('<','').replace('>','').replace(']','').replace('[','').replace('?','')\
                 .replace('/','').replace('《','').replace('》','').replace('・','').replace('/','').replace('，','')\
                 .replace('「','').replace('」','').replace('！','').replace('｜','').replace('【','').replace('】','')\
                 .replace('？','').replace('、','').replace('.','').replace('’','').replace('–','').replace('～','')\
-                .replace('?','')
+                .replace('?','').replace('#','').replace('!','').replace('(','').replace(')','').replace('~','')
 
             except:
-                title_save = "NO_data_title"
+                title_save = "title pass"
                 print(title_save)
 
 
@@ -73,7 +74,7 @@ while page < total_pages:
                 path_dir_each = path_dir + '\\' + title_save
 
             except:
-               title = "NO_data_title"
+               title = "title pass"
                print(title)
 
 # 網址
@@ -83,46 +84,59 @@ while page < total_pages:
                 url_article_1 = ('{"文章網址":"' + url_article + '"}')
 
             except:
-                url_article = "NO_data_url_article"
+                url_article = "https://www.Nodata_url_article"
                 print(url_article)
 
 
-    # 存成一個檔(網址、標題)
+# 存成一個檔(網址、標題)
             try:
                 os.chdir('E:\專題\\Mobile01\\')
                 f = open(area.get(int(num)) + '.txt', mode='a', encoding='utf8')
                 f.write(url_article_1 + '\n' + title + '\n')
 
+                f = open(area.get(int(num)) + '_saved.txt', mode='a', encoding='utf8')
+                f.write(url_back.split('=')[-1] + '\n')
+
             except:
                 print('os.chdir pass')
 
 # 內文
-            url_back = title_txt[n]['href'][12:]
-            url_article = 'https://www.mobile01.com/topicdetail.' + url_back
+            try:
+                url_back = title_txt[n]['href'][12:]
+                url_article = 'https://www.mobile01.com/topicdetail.' + url_back
 
-            req_con = request.Request(url=url_article, headers=headers)
-            res_con = request.urlopen(req_con)
-            soup_con = BeautifulSoup(res_con, 'html.parser')
-            # print('soup_con:', soup_con)
-            article = soup_con.select('div[itemprop="articleBody"] ')[0].text.strip()
-            article_1 = ('{"文章內容":"' + article + '"}')
+                req_con = request.Request(url=url_article, headers=headers)
+                res_con = request.urlopen(req_con)
+                soup_con = BeautifulSoup(res_con, 'html.parser')
+                # print('soup_con:', soup_con)
+                article = soup_con.select('div[itemprop="articleBody"] ')[0].text.strip()
+                article_1 = ('{"文章內容":"' + article + '"}')
+
+            except:
+                print('article pass')
 
 # 存成一個檔(內文)
             os.chdir('E:\專題\\Mobile01\\')
             f = open(area.get(int(num)) + '.txt', mode='a', encoding='utf8')
             f.write(url_article_1 + title + '{"景點名稱":"NA"}' + '\n' + article_1 +
                     '\n' + '{"留言":"NA"}' + '\n' + '{"地址":"NA"}' + '\n' +
-                    '{"縣市":"' + area.get(int(num)) + '"}' + '\n' + '-----')
+                    '{"縣市":"' + area.get(int(num)) + '"}' + '\n' + '-----' + '\n')
 
 # 圖片
-            url_back = title_txt[n]['href'][12:]
-            url_article = 'https://www.mobile01.com/topicdetail.' + url_back
+            try:
+                url_back = title_txt[n]['href'][12:]
+                url_article = 'https://www.mobile01.com/topicdetail.' + url_back
 
-            req_con = request.Request(url=url_article, headers=headers)
-            res_con = request.urlopen(req_con)
-            soup_con = BeautifulSoup(res_con, 'html.parser')
-            pic_txt_0 = soup_con.select('div[itemprop="articleBody"] img[class="lazy"]')[0:]
-            # print('pic_txt_0:', pic_txt_0)
+
+                req_con = request.Request(url=url_article, headers=headers)
+                res_con = request.urlopen(req_con)
+                soup_con = BeautifulSoup(res_con, 'html.parser')
+                pic_txt_0 = soup_con.select('div[itemprop="articleBody"] img[class="lazy"]')[0:]
+                # print('pic_txt_0:', pic_txt_0)
+
+            except:
+                print('url_article pass')
+
 
             if not os.path.exists(path_dir_each):
                 os.mkdir(path_dir_each)
@@ -177,7 +191,7 @@ while page < total_pages:
             # print(title, '已寫入')
             # print(article_1, '已寫入')
             # print('-----', '已寫入')
-            print(title + '存檔完成')
+            print(title + url_article_1 +' 存檔完成')
             # print()
 
     # except:
@@ -190,6 +204,8 @@ while page < total_pages:
             '{"縣市":"' + area.get(int(num)) + '"}' + '\n' + '-----' + '\n'
     f.write(total)
 
+    # time.sleep(5)
+    time.sleep(random.randint(1, 4))
     page += 1
 
 print(area.get(int(num)) + ' 所有文章存檔完成!!! at', time.asctime())
@@ -205,4 +221,14 @@ print(area.get(int(num)) + ' 所有文章存檔完成!!! at', time.asctime())
 "地址": "",
 "縣市": "",
 }
+"""
+
+""" 最後一筆
+188:'基隆市'{"標題":"七堵雞塊麵"}{"文章網址":"https://www.mobile01.com/topicdetail.php?f=188&t=6046060"} 存檔完成
+189:'台北市'
+190:'新北市'
+191:'桃園市'
+192:'新竹市'
+193:'新竹縣'
+209:'宜蘭縣
 """
