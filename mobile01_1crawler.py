@@ -17,12 +17,11 @@ num = input('請輸入縣市代碼: ')
 # 建立縣市資料夾 =====
 # path_dir = 'E:\專題\Mobile01\基隆市'
 path_dir = 'E:\專題\\Mobile01\\' + area.get(int(num))
-
-if not os.path.exists(path_dir):
-    os.mkdir(path_dir)
-    print('建立新資料夾:', path_dir, '\n')
-else:
-    print('資料夾 ' + path_dir + ' 已存在')
+# if not os.path.exists(path_dir):
+#     os.mkdir(path_dir)
+#     print('建立新資料夾:', path_dir, '\n') # E:\專題\Mobile01\基隆市
+# else:
+#     print('資料夾 ' + path_dir + ' 已存在')
 
 # 爬取列表 =====
 print('開始爬取:', area.get(int(num)))
@@ -68,9 +67,13 @@ while page < total_pages:
             print(title_save)
 
 # 文章序號 =====
-        url_back = title_txt[n]['href'][12:]
-        url_article = 'https://www.mobile01.com/topicdetail.' + url_back # 文章網址
-        serial = url_article.split('=')[-1] # 文章序號
+        try:
+            url_back = title_txt[n]['href'][12:]
+            url_article = 'https://www.mobile01.com/topicdetail.' + url_back # 文章網址
+            serial = url_article.split('=')[-1] # 文章序號
+
+        except:
+            print('article serial pass')
 
 # 讀取進度 =====
         os.chdir('E:\專題\\Mobile01\\')
@@ -81,10 +84,9 @@ while page < total_pages:
         serial = url_back.split('=')[-1]
 
         if serial in serial_content:
-            print('文章編號' + serial + '已存在')
+            print('page', page, ':文章編號' + serial + '已存在')
 
         else:
-            # print('serial number not exist')
             f = open(serial_txt, mode='a', encoding='utf8' + '\n')
             f.write(serial + '\n')
 
@@ -107,11 +109,11 @@ while page < total_pages:
                 url_article = "https://www.Nodata_url_article"
                 print(url_article)
 
-# 建立資料夾 =====
-            if not os.path.exists(path_dir_each):
-                os.mkdir(path_dir_each)
-            os.chdir(path_dir_each)
-            # print('getcwd', os.getcwd())
+# 建立圖片資料夾 =====(要抓圖片時取消此段註解即可)
+#             if not os.path.exists(path_dir_each):
+#                 os.mkdir(path_dir_each)
+#             os.chdir(path_dir_each)
+#             # print('getcwd', os.getcwd())
 
 # 內文 =====
             try:
@@ -132,54 +134,57 @@ while page < total_pages:
             except:
                 print('article or postdate pass')
 
-# 圖片
-            try:
-                url_back = title_txt[n]['href'][12:]
-                url_article = 'https://www.mobile01.com/topicdetail.' + url_back
 
+# 圖片 =====(要抓圖片時取消此段註解即可)
+#             try:
+#                 url_back = title_txt[n]['href'][12:]
+#                 url_article = 'https://www.mobile01.com/topicdetail.' + url_back
 
-                req_con = request.Request(url=url_article, headers=headers)
-                res_con = request.urlopen(req_con)
-                soup_con = BeautifulSoup(res_con, 'html.parser')
-                pic_txt_0 = soup_con.select('div[itemprop="articleBody"] img[class="lazy"]')[0:]
-                # print('pic_txt_0:', pic_txt_0)
-                serial = url_article.split('=')[-1]
+#                 req_con = request.Request(url=url_article, headers=headers)
+#                 res_con = request.urlopen(req_con)
+#                 soup_con = BeautifulSoup(res_con, 'html.parser')
+#                 pic_txt_0 = soup_con.select('div[itemprop="articleBody"] img[class="lazy"]')[0:]
+#                 # print('pic_txt_0:', pic_txt_0)
+#                 serial = url_article.split('=')[-1]
 
-            except:
-                print('url_article pass')
+#             except:
+#                 print('url_article pass')
 
+#             if not os.path.exists(path_dir_each):
+#                 os.mkdir(path_dir_each)
+#             os.chdir(path_dir_each)
 
-            if not os.path.exists(path_dir_each):
-                os.mkdir(path_dir_each)
-            os.chdir(path_dir_each)
+#             for pic in pic_txt_0:
+#                 pic_url_head = pic['data-src'][0:6]
+#                 # print('pic_url_head:', pic_url_head)
 
-            for pic in pic_txt_0:
-                pic_url_head = pic['data-src'][0:6]
-                # print('pic_url_head:', pic_url_head)
+#                 if pic_url_head == 'https:':
+#                     pic_url = pic['data-src']
 
-                if pic_url_head == 'https:':
-                    pic_url = pic['data-src']
+#                 elif pic_url_head == '//atta':
+#                     pic_url = 'http:' + str(pic['data-src'][0:])
+#                     # print('elif:', pic_url)
 
-                elif pic_url_head == '//atta':
-                    pic_url = 'http:' + str(pic['data-src'][0:])
-                    # print('elif:', pic_url)
+#                 else:
+#                     pic_url = 'http://www.nodata.com'
 
-                else:
-                    pic_url = 'http://www.nodata.com'
+#                 try:
+#                     request.urlretrieve(pic_url, 'pic_' + serial + '_' + str(pic_txt_0.index(pic)+1) + '.jpg')
 
-                try:
-                    request.urlretrieve(pic_url, 'pic_' + serial + '_' + str(pic_txt_0.index(pic)+1) + '.jpg')
+#                 except:
+#                     print('pic pass')
 
-                except:
-                    print('pic pass')
-
-# 存檔
+# 存檔 =====
+            if not os.path.exists(path_dir + 'txt'):
+                os.mkdir(path_dir + 'txt')
+            os.chdir(path_dir +'txt')
             f = open(title_save + '.txt', mode='a', encoding='utf8')
             # f.write(url_article_1)  # 寫入網址
 
             total = url_article_1 + '\n' + postdate_1 + '\n' + title + '\n' + '{"景點名稱":"NA"}' + '\n' + article_1 + \
                     '\n' + '{"留言":"NA"}' + '\n' + '{"地址":"NA"}' + '\n' +\
                     '{"縣市":"' + area.get(int(num)) + '"}' + '\n' + '-----'+ '\n'
+
             f.write(total)
             print('Page', page, title + url_article_1 +' 存檔完成')
 
@@ -199,14 +204,4 @@ print(area.get(int(num)) + ' 所有文章存檔完成!!! at', time.asctime())
 "地址": "", 
 "縣市": "",
 }
-"""
-
-""" 最後一筆
-188:'基隆市'{"標題":"北海岸基隆一日遊行程古蹟遺址熱門打"}{"文章網址":"https://www.mobile01.com/topicdetail.php?f=188&t=6047346"} 存檔完成
-189:'台北市'{"標題":"無名高麗菜飯原汁原味排骨湯台北捷運"}{"文章網址":"https://www.mobile01.com/topicdetail.php?f=189&t=5291831"} 存檔完成
-190:'新北市'{"標題":"住在中永和的朋友大家都吃什麼美食呢"}{"文章網址":"https://www.mobile01.com/topicdetail.php?f=190&t=3798590"} 存檔完成
-191:'桃園市'
-192:'新竹市'
-193:'新竹縣'
-209:'宜蘭縣
 """
