@@ -6,7 +6,8 @@ from bs4 import BeautifulSoup
 import os
 import time
 import random
-import smtplib
+import requests
+import json
 
 headers = {'user-agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'}
 
@@ -15,7 +16,7 @@ area = {188:'基隆市', 189:'台北市', 190:'新北市', 191:'桃園市', 192:
 print(area.items())
 # num = input('請輸入縣市代碼: ')
 
-for num in (188, 189, 190, 191, 192, 193, 209):
+for num in (188, 189,190, 191, 192, 193, 209):
 
     # 建立縣市資料夾 =====
     path_dir = 'E:\專題\\Mobile01\\' + area.get(int(num)) # E:\專題\Mobile01\基隆市
@@ -55,12 +56,14 @@ for num in (188, 189, 190, 191, 192, 193, 209):
         for n in range(0,30):
             try:
                 title_replace = title_txt[n].text
-                title_save = title_replace[0:20].replace('*','').replace('|','').replace('\\','').replace(':','')\
+                title_save = title_replace[0:10].replace('*','').replace('|','').replace('\\','').replace(':','')\
                 .replace('\"','').replace('<','').replace('>','').replace(']','').replace('[','').replace('?','')\
                 .replace('/','').replace('《','').replace('》','').replace('・','').replace('/','').replace('，','')\
                 .replace('「','').replace('」','').replace('！','').replace('｜','').replace('【','').replace('】','')\
                 .replace('？','').replace('、','').replace('.','').replace('’','').replace('–','').replace('～','')\
-                .replace('?','').replace('#','').replace('!','').replace('(','').replace(')','').replace('~','')
+                .replace('?','').replace('#','').replace('!','').replace('(','').replace(')','').replace('~','')\
+                .replace('、','').replace('『','').replace('』','').replace('，','').replace('-','').replace('\\n','')
+
 
             except:
                 title_save = "title pass"
@@ -92,8 +95,10 @@ for num in (188, 189, 190, 191, 192, 193, 209):
 
     # 標題及建立文章資料夾 =====
                 try:
-                    title = ('{"標題":"' + title_save + '"}')
-                    path_dir_each = path_dir + '\\' + title_save
+                    title_0 = (title_txt[n].text) # 完整標題
+                    title = ('"標題":"' + title_save + '",')
+                    # path_dir_each = path_dir + '\\' + title_save # 取標題前20字元為資料夾名稱
+                    path_dir_each = path_dir + '\\' + title_0  # 取標題前20字元為資料夾名稱
 
                 except:
                     title = "title pass"
@@ -103,7 +108,7 @@ for num in (188, 189, 190, 191, 192, 193, 209):
                 try:
                     url_back = title_txt[n]['href'][12:]
                     url_article = 'https://www.mobile01.com/topicdetail.' + url_back
-                    url_article_1 = ('{"文章網址":"' + url_article + '"}')
+                    url_article_1 = ('{"文章網址":"' + url_article + '",')
 
                 except:
                     url_article = "https://www.Nodata_url_article"
@@ -126,10 +131,10 @@ for num in (188, 189, 190, 191, 192, 193, 209):
                     # print('soup_con:', soup_con)
 
                     article = soup_con.select('div[itemprop="articleBody"] ')[0].text.strip()
-                    article_1 = ('{"文章內容":"' + article + '"}')
+                    article_1 = ('"文章內容":"' + article + '",')
 
                     postdate = soup_con.select('span[class="o-fNotes o-fSubMini"]')[0].text
-                    postdate_1 = ('{"發文日期":"' + postdate + '"}')
+                    postdate_1 = ('"發文日期":"' + postdate + '",')
 
                 except:
                     print('article or postdate pass')
@@ -185,23 +190,53 @@ for num in (188, 189, 190, 191, 192, 193, 209):
     #                     print('pic pass')
 
     # 存檔 =====
-                if not os.path.exists(path_dir + 'txt'):
-                    os.mkdir(path_dir + 'txt')
-                os.chdir(path_dir +'txt')
-                f = open(title_save + '.txt', mode='a', encoding='utf8')
+                if not os.path.exists(path_dir):
+                    os.mkdir(path_dir)
+                os.chdir(path_dir)
+                # f = open(title_save + serial + '.json', mode='a', encoding='utf8')
+                f = open(serial + '.json', mode='a', encoding='utf8')
                 # f.write(url_article_1)  # 寫入網址
 
-                total = url_article_1 + '\n' + postdate_1 + '\n' + title + '\n' + '{"景點名稱":"NA"}' + '\n' + article_1 + \
-                        '\n' + '{"留言":"NA"}' + '\n' + '{"地址":"NA"}' + '\n' +\
-                        '{"縣市":"' + area.get(int(num)) + '"}' + '\n' + '-----'+ '\n'
+                # total = url_article_1 + '\n' + postdate_1 + '\n' + title + '\n' + '"景點名稱":"NA",' + '\n' + article_1 + \
+                #         '\n' + '"留言":"NA",' + '\n' + '"地址":"NA",' + '\n' + \
+                #         '"縣市":"' + area.get(int(num)) + '"}' + '\n' + '-----' + '\n'
 
-                f.write(total)
-                print(area.get(int(num)), 'Page', page, 'of', total_pages-1, ':', title + url_article_1 +' 存檔完成')
+                total = {'文章網址':url_article,
+                           '發文時間':postdate,
+                           '標題':title_0,
+                           '景點名稱':'NA',
+                           '文章內容':article,
+                           '留言':'NA',
+                           '地址':'NA',
+                           '縣市':area.get(int(num))
+                           }
+                total_k = json.dumps(total, ensure_ascii=False)
+                f.write(total_k)
+                # print('已寫入:', total_k)
+                print(area.get(int(num)), 'Page', page, 'of', total_pages-1, ' 存檔完成', '......', '文章編號:' + serial + '、' + '標題:', title_0)
 
         time.sleep(random.randint(1, 3))
         page += 1
 
 print(area.get(int(num)) + ' 所有文章存檔完成!!! at', time.asctime())
+
+def lineNotifyMessage(token, msg):
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    payload = {'message': msg}
+    r = requests.post("https://notify-api.line.me/api/notify", headers=headers, params=payload)
+    return r.status_code
+
+
+# 修改為你要傳送的訊息內容
+message = 'Mobile01的所有文章存檔完成 at ', time.asctime()
+# 修改為你的權杖內容
+token = 'itismytoken...'
+
+lineNotifyMessage(token, message)
 
 """存檔格式
 {
